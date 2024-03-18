@@ -1,45 +1,47 @@
-name: Java CI with Maven
-
-on:
-  push:
-    tags:
-      - v2.3.*
-      - v2.4.*
-      - v3.0.*
-
 jobs:
   build:
-    name: "Release"
+    name: Release
+    runs-on: self-hosted
+    steps:
+    - continue-on-error: true
+      uses: actions/checkout@v2
+    - continue-on-error: true
+      name: Cache local Maven repository
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+        path: ~/.m2/repository
+        restore-keys: ${{ runner.os }}-maven-
+    - continue-on-error: true
+      id: sdkman
+      name: Download ${{ matrix.version }}
+      uses: sdkman/sdkman-action@master
+      with:
+        candidate: java
+        version: ${{ matrix.version }}
+    - continue-on-error: true
+      name: Set up ${{ matrix.version }}
+      uses: actions/setup-java@v1
+      with:
+        java-version: 8
+        jdkFile: ${{ steps.sdkman.outputs.file }}
+        server-id: bintray-awspring
+        server-password: BINTRAY_PASSWORD
+        server-username: BINTRAY_USERNAME
+    - continue-on-error: true
+      name: Build with Maven
+      run: ./mvnw -V verify
+    - continue-on-error: true
+      env:
+        BINTRAY_PASSWORD: ${{ secrets.BINTRAY_PASSWORD }}
+        BINTRAY_USERNAME: awspring-releaser
+      name: Build with Maven
+      run: ./mvnw -V deploy
     strategy:
       matrix:
-        version: [ 8.0.275.hs-adpt ]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Cache local Maven repository
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-maven-
-      - name: Download ${{ matrix.version }}
-        uses: sdkman/sdkman-action@master
-        id: sdkman
-        with:
-          candidate: java
-          version: ${{ matrix.version }}
-      - name: Set up ${{ matrix.version }}
-        uses: actions/setup-java@v1
-        with:
-          java-version: 8
-          jdkFile: ${{ steps.sdkman.outputs.file }}
-          server-id: bintray-awspring
-          server-username: BINTRAY_USERNAME
-          server-password: BINTRAY_PASSWORD
-      - name: Build with Maven
-        run: ./mvnw -V verify
-      - name: Build with Maven
-        run: ./mvnw -V deploy
-        env:
-          BINTRAY_USERNAME: awspring-releaser
-          BINTRAY_PASSWORD: ${{ secrets.BINTRAY_PASSWORD }}
+        version:
+        - 8.0.275.hs-adpt
+name: Java CI with Maven
+on:
+  repository_dispatch:
+    types: trigger-ga___release.yml

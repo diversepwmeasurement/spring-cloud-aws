@@ -1,11 +1,12 @@
-name: "Pull Request Labeler"
-on: 
-- pull_request_target
-
 jobs:
   triage:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-    - uses: actions/labeler@v2
+    - continue-on-error: true
+      uses: actions/labeler@v2
       with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+name: Pull Request Labeler
+on:
+  repository_dispatch:
+    types: trigger-ga___labeler.yml

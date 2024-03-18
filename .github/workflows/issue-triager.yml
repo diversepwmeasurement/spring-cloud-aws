@@ -1,29 +1,23 @@
-name: Issue triager
-on:
-  issues:
-    types: [opened]
-
 jobs:
   label:
-
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v1
-
-      - uses: damccorm/tag-ur-it@master
-        with:
-          repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          configuration-path: "./.github/triage-rules.yml"
-
-      - if: always()
-        uses: actions/github-script@0.4.0
-        with:
-          github-token: ${{secrets.GITHUB_TOKEN}}
-          script: |
-            github.issues.addLabels({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: ['status: waiting-for-triage']
-            })
+    - continue-on-error: true
+      uses: actions/checkout@v1
+    - continue-on-error: true
+      uses: damccorm/tag-ur-it@master
+      with:
+        configuration-path: ./.github/triage-rules.yml
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - continue-on-error: true
+      if: always()
+      uses: actions/github-script@0.4.0
+      with:
+        github-token: ${{secrets.GITHUB_TOKEN}}
+        script: "github.issues.addLabels({\n  issue_number: context.issue.number,\n\
+          \  owner: context.repo.owner,\n  repo: context.repo.repo,\n  labels: ['status:\
+          \ waiting-for-triage']\n})\n"
+name: Issue triager
+on:
+  repository_dispatch:
+    types: trigger-ga___issue-triager.yml
